@@ -1,0 +1,83 @@
+---
+title: Prerequisites
+description: Tools, versions, and AWS requirements before the Kueue EKS lab.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+## Tools
+
+| Tool | Minimum | Check |
+| --- | --- | --- |
+| AWS CLI v2 | current | `aws --version` |
+| eksctl | **0.230.0+** (latest recommended) | `eksctl version` |
+| kubectl | client near cluster version (1.29+) | `kubectl version --client` |
+| jq | any recent | `jq --version` |
+| helm | 3.x | `helm version` |
+| gh | optional | `gh --version` |
+
+If `eksctl` is missing or older than **0.230.0**, install from the [official GitHub release](https://eksctl.io/installation/):
+
+```bash
+ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+PLATFORM=$(uname -s)_$ARCH
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"
+tar -xzf "eksctl_${PLATFORM}.tar.gz" -C /tmp && rm "eksctl_${PLATFORM}.tar.gz"
+sudo install -m 0755 /tmp/eksctl /usr/local/bin && rm /tmp/eksctl
+eksctl version
+```
+
+## Auth and Region
+
+The lab uses **`ap-southeast-2`** for the cluster and for <Tooltip term="identity-center" label="IAM Identity Center" /> (`IDC_REGION`). Keep `AWS_REGION` / `IDC_REGION` on that Region for all steps.
+
+CLI auth uses SSO via profile **`sandbox`** (`aws sso login`). The optional [Argo CD capability](/deploy-and-operate/argocd-capability/) page also wires that same Identity Center directory so you can SSO into the managed Argo CD UI.
+
+```bash
+export AWS_PROFILE=sandbox
+aws sso login
+aws sts get-caller-identity
+```
+
+If your local AWS config uses a different profile name, export that instead.
+
+## IAM
+
+You need permission to create EKS clusters, IAM roles, and (for the optional Argo CD path) EKS capabilities and Identity Center mappings.
+
+## Existing cluster shortcut
+
+If you already run **EKS Auto Mode** with **managed Argo CD** and optionally **KEDA**, skip to [Kueue via GitOps](/deploy-and-operate/kueue-gitops/).
+
+## Working directory
+
+**Every file you create in this walkthrough goes under `demo/` at the repository root** (gitignored). Relative paths like `config/…` and `examples/…` mean `demo/config/…` and `demo/examples/…`. Never create those folders at the repo root.
+
+From the repository root:
+
+```bash
+export LAB_DIR="$(pwd)/demo"
+mkdir -p "$LAB_DIR" && cd "$LAB_DIR"
+```
+
+<Aside type="tip">
+  Keep one shell open for the lab. Later pages reuse `LAB_DIR`, `CLUSTER_NAME`, `AWS_REGION`, `IDC_REGION`, `AWS_PROFILE`, and kubeconfig context. If you open a new shell: `cd "$LAB_DIR"` (or `cd demo` from the repo root).
+</Aside>
+
+```bash
+export AWS_PROFILE=sandbox
+export AWS_PAGER=""
+export AWS_REGION=ap-southeast-2
+export AWS_DEFAULT_REGION="$AWS_REGION"
+export IDC_REGION="$AWS_REGION"
+export CLUSTER_NAME=kueue-lab
+export K8S_VERSION=1.36
+export LAB_DIR="$(pwd)/demo"
+```
+
+If you are already inside `demo/`, set `export LAB_DIR="$(pwd)"` instead.
+
+## Cost awareness
+
+While the lab runs you pay for the EKS control plane and any Auto Mode nodes your Jobs schedule. Teardown is on the [last deploy page](/deploy-and-operate/teardown/).

@@ -1,0 +1,313 @@
+---
+title: Queues and flavors
+description: Apply ResourceFlavor, ClusterQueue, and LocalQueue for multi-project fair batch sharing.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import ThemeDiagram from "@/components/ThemeDiagram.astro";
+
+Work from **`demo/`** at the repository root (all files below land under `demo/`):
+
+```bash
+cd "$LAB_DIR"
+```
+
+<Aside type="caution" title="“Project” here is not an Argo CD Project">
+  Names like **`project-a`**, **`project-b`**, and **`project-c`** are **Kubernetes namespaces** that stand in for batch tenants. Each gets a Kueue **LocalQueue** with the same name.
+
+  They are **not** Argo CD `AppProject`s and **not** Argo CD Applications. Argo CD in this lab only installs the **Kueue controller** (one Application). Tenant Jobs are plain Kubernetes `Job`s applied with `kubectl`.
+</Aside>
+
+<ThemeDiagram
+  dark="tenants-vs-argo-diagram.svg"
+  light="tenants-vs-argo-diagram-light.svg"
+  alt="Left: Argo CD syncs one Application into kueue-system. Right: project-a, project-b, and project-c are Kubernetes namespaces with LocalQueues and sample Jobs sharing ClusterQueue shared-batch — not Argo CD AppProjects."
+/>
+
+## Set variables
+
+```bash
+export SPOT_CPU_QUOTA=10
+export SPOT_MEMORY_QUOTA=20Gi
+export ON_DEMAND_CPU_QUOTA=4
+export ON_DEMAND_MEMORY_QUOTA=8Gi
+```
+
+## Create namespaces and queue policy
+
+```bash
+mkdir -p examples/kueue examples/workloads
+
+cat > examples/kueue/queues.yaml <<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: project-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: project-b
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: project-c
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: spot
+spec:
+  nodeLabels:
+    karpenter.sh/capacity-type: spot
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: on-demand
+spec:
+  nodeLabels:
+    karpenter.sh/capacity-type: on-demand
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: shared-batch
+spec:
+  namespaceSelector: {}
+  resourceGroups:
+    - coveredResources: ["cpu", "memory"]
+      flavors:
+        - name: spot
+          resources:
+            - name: cpu
+              nominalQuota: ${SPOT_CPU_QUOTA}
+            - name: memory
+              nominalQuota: ${SPOT_MEMORY_QUOTA}
+        - name: on-demand
+          resources:
+            - name: cpu
+              nominalQuota: ${ON_DEMAND_CPU_QUOTA}
+            - name: memory
+              nominalQuota: ${ON_DEMAND_MEMORY_QUOTA}
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: project-a
+  namespace: project-a
+spec:
+  clusterQueue: shared-batch
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: project-b
+  namespace: project-b
+spec:
+  clusterQueue: shared-batch
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: project-c
+  namespace: project-c
+spec:
+  clusterQueue: shared-batch
+EOF
+
+kubectl apply -f examples/kueue/queues.yaml
+```
+
+This creates Kubernetes namespaces `project-a`, `project-b`, and `project-c` (batch tenants — not Argo CD Projects), Spot and On-Demand ResourceFlavors, ClusterQueue `shared-batch`, and a LocalQueue in each tenant namespace.
+
+EKS Auto Mode labels capacity with **`karpenter.sh/capacity-type`** (`spot` / `on-demand`, lowercase) — not the older managed-node-group label `eks.amazonaws.com/capacityType`.
+
+Default Auto Mode already has **`system`** and **`general-purpose`** NodePools (**on-demand**). Spot-flavored Kueue Jobs need a third pool — **`batch`** — that allows **Spot** (with On-Demand fallback):
+
+<ThemeDiagram
+  dark="nodepools-diagram.svg"
+  light="nodepools-diagram-light.svg"
+  alt="Three Auto Mode NodePools: system and general-purpose are on-demand defaults; lab batch NodePool allows spot plus on-demand so Spot-flavored Jobs can schedule."
+/>
+
+```bash
+cat > examples/kueue/batch-nodepool.yaml <<'EOF'
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: batch
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+        - key: eks.amazonaws.com/instance-category
+          operator: In
+          values: ["c", "m", "r"]
+        - key: eks.amazonaws.com/instance-generation
+          operator: Gt
+          values: ["4"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+EOF
+
+kubectl apply -f examples/kueue/batch-nodepool.yaml
+```
+
+## Verify queues
+
+```bash
+kubectl get clusterqueue,localqueue,resourceflavor
+kubectl get nodepool batch
+kubectl describe clusterqueue shared-batch
+```
+
+## Create one sample Job per project
+
+Each project gets its own Job (same shape, own namespace + queue label) — not one Job reused across tenants:
+
+```bash
+cat > examples/workloads/sample-jobs.yaml <<'EOF'
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-job
+  namespace: project-a
+  labels:
+    kueue.x-k8s.io/queue-name: project-a
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: work
+          image: public.ecr.aws/docker/library/busybox:1.36
+          command: ["/bin/sh", "-c", "sleep 60"]
+          resources:
+            requests:
+              cpu: "1"
+              memory: "200Mi"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-job
+  namespace: project-b
+  labels:
+    kueue.x-k8s.io/queue-name: project-b
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: work
+          image: public.ecr.aws/docker/library/busybox:1.36
+          command: ["/bin/sh", "-c", "sleep 60"]
+          resources:
+            requests:
+              cpu: "1"
+              memory: "200Mi"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-job
+  namespace: project-c
+  labels:
+    kueue.x-k8s.io/queue-name: project-c
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: work
+          image: public.ecr.aws/docker/library/busybox:1.36
+          command: ["/bin/sh", "-c", "sleep 60"]
+          resources:
+            requests:
+              cpu: "1"
+              memory: "200Mi"
+EOF
+
+kubectl apply -f examples/workloads/sample-jobs.yaml
+```
+
+## Job label
+
+Every managed Job needs a queue label matching its LocalQueue (here each Job’s namespace and queue name match):
+
+```yaml
+metadata:
+  labels:
+    kueue.x-k8s.io/queue-name: project-a   # or project-b / project-c
+```
+
+## Check all three projects
+
+```bash
+kubectl get localqueue -A
+kubectl get workloads -A
+kubectl get jobs,pods -A | grep -E 'NAMESPACE|project-'
+kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool
+```
+
+You should see **three Jobs** (one per tenant namespace), not three Argo CD Applications or AppProjects. Each Job gets its own Workload (`job-sample-job-<hash>`), admitted into `shared-batch` on the **spot** flavor.
+
+Example after a successful apply (names and ages vary):
+
+```text
+NAMESPACE   NAME        CLUSTERQUEUE   PENDING WORKLOADS   ADMITTED WORKLOADS
+project-a   project-a   shared-batch   0                   1
+project-b   project-b   shared-batch   0                   1
+project-c   project-c   shared-batch   0                   1
+
+NAMESPACE   NAME                   QUEUE       RESERVED IN    ADMITTED   FINISHED   AGE
+project-a   job-sample-job-3d310   project-a   shared-batch   True                  6s
+project-b   job-sample-job-ac318   project-b   shared-batch   True                  6s
+project-c   job-sample-job-d84fc   project-c   shared-batch   True                  6s
+
+NAMESPACE   NAME         STATUS    COMPLETIONS   DURATION   AGE
+project-a   sample-job   Running   0/1           8s         8s
+project-b   sample-job   Running   0/1           8s         8s
+project-c   sample-job   Running   0/1           8s         8s
+```
+
+Inspect one admission to confirm Spot:
+
+```bash
+kubectl get workload -n project-a -o jsonpath='{.items[0].status.admission}{"\n"}'
+```
+
+Expect `clusterQueue: shared-batch` and flavors `cpu` / `memory` set to **spot**.
+
+Pods may stay **Pending** for a minute or two the first time while Auto Mode creates a Spot node from NodePool `batch`. Once that node exists (`CAPACITY-TYPE=spot`, `NODEPOOL=batch`), later Jobs usually schedule in seconds. Each sample Job runs `sleep 60`, then shows **Complete** / Workload **FINISHED=True**.
+
+## Adjust concurrency cap
+
+The lab sets **10 CPU** nominal quota on the Spot flavor in ClusterQueue `shared-batch` (`SPOT_CPU_QUOTA`). With 1 CPU per Job, roughly ten Jobs admit at once across all projects sharing that queue.
+
+Change the variable, recreate `examples/kueue/queues.yaml`, then:
+
+```bash
+kubectl apply -f examples/kueue/queues.yaml
+```
+
+Next: [KueueViz dashboard](/deploy-and-operate/kueueviz/).

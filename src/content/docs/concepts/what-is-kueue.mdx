@@ -1,0 +1,46 @@
+---
+title: What is Kueue
+description: Job-level batch queuing on Kubernetes — when to use it and what it does not replace.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+<Tooltip term="kueue" label="Kueue" /> is a Kubernetes-native **job admission controller**. It decides **when** batch work may create pods, based on **quota, priority, and resource flavors** — not how many replicas respond to traffic.
+
+## When Kueue fits
+
+| Signal | Why Kueue helps |
+| --- | --- |
+| More batch jobs than cluster capacity | Jobs wait in a queue instead of hundreds of Pending pods |
+| Multiple projects sharing CPUs or GPUs | Fair share via <Tooltip term="clusterqueue" label="ClusterQueue" /> and <Tooltip term="localqueue" label="LocalQueue" /> |
+| Spot plus On-Demand on the same cluster | <Tooltip term="resourceflavor" label="ResourceFlavor" /> routes jobs to the right node pool |
+| Cap concurrent batch work | Policy limit even when <Tooltip term="auto-mode" label="Auto Mode" /> could add nodes |
+
+## When you can skip it
+
+- One project, plenty of headroom, no concurrency cap — <Tooltip term="auto-mode" label="Auto Mode" /> scaling alone may be enough.
+- Always-on web or API traffic — use Deployment plus <Tooltip term="hpa" label="HPA" /> or <Tooltip term="keda" label="KEDA" />, not Kueue.
+- Event-driven replica scaling from SQS or Kafka — that is **KEDA**, not Kueue. See [KEDA vs Kueue](/reference/keda-vs-kueue/) for side-by-side diagrams.
+
+## What Kueue does not do
+
+- **Create Spot capacity** — it queues admission; AWS and Auto Mode still provide nodes.
+- **Replace the scheduler** — it gates admission; the default scheduler places admitted pods.
+- **Scale Deployments from external metrics** — use <Tooltip term="keda" label="KEDA" /> for that.
+- **Ship as an EKS add-on** — install via <Tooltip term="helm" label="Helm" /> or <Tooltip term="gitops" label="GitOps" /> (HyperPod task governance excepted).
+
+<Aside type="tip">
+  Think of Kueue as a waiting line for **batch jobs that can wait**. Web apps should not wait in line.
+</Aside>
+
+## Unit of control
+
+<Tooltip term="kueue" label="Kueue" /> manages **Jobs** (and integrated CRDs such as JobSet or RayJob). Each admitted Job gets a <Tooltip term="workload" label="Workload" /> object you can inspect:
+
+```bash
+kubectl get workloads -A
+kubectl describe workload -n project-a <workload-name>
+```
+
+Statuses move from **Queued** to **Admitted** when quota allows pods to start.

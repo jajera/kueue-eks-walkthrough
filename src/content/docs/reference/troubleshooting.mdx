@@ -1,0 +1,116 @@
+---
+title: Troubleshooting
+description: Common failure signatures for Kueue on EKS Auto Mode.
+---
+
+## Cluster create / auth
+
+| Cause | What to check |
+| --- | --- |
+| SSO session expired | `export AWS_PROFILE=sandbox && aws sso login`, then `aws sts get-caller-identity` |
+| `eksctl: command not found` | Install **0.230.0+** — see [Prerequisites](/deploy-and-operate/prerequisites/) |
+| eksctl too old for Auto Mode / capabilities | `eksctl version` must be **0.230.0+** |
+| `kubectl get nodes` empty right after create | Expected on Auto Mode until pods need capacity — confirm with `aws eks describe-cluster` |
+| Wrong kubeconfig context | `kubectl config current-context` should be the `kueue-lab` ARN |
+
+## Workload stays Queued
+
+| Cause | What to check |
+| --- | --- |
+| Quota exhausted | `kubectl describe clusterqueue shared-batch` — Spot CPU at `SPOT_CPU_QUOTA` (lab default **10**) |
+| Missing queue label | Job must have `kueue.x-k8s.io/queue-name` matching a LocalQueue name |
+| LocalQueue missing | `kubectl get localqueue -A` |
+| Wrong namespace | LocalQueue namespace must match Job namespace |
+| Sample Jobs still Admitted | Finished samples release quota; running samples count toward the cap |
+
+## Pods Pending but Workload Admitted
+
+Kueue admitted the Job; the scheduler cannot place pods yet.
+
+| Cause | What to check |
+| --- | --- |
+| Auto Mode scaling lag | `kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool` — wait for **batch** Spot nodes |
+| Spot unavailable | Only N Spot nodes exist in the Region or AZ — pods may stay Pending while Admitted |
+| Missing `batch` NodePool | Default `general-purpose` is on-demand only — apply `examples/kueue/batch-nodepool.yaml` |
+| ResourceFlavor mismatch | Node labels vs `karpenter.sh/capacity-type` (`spot` / `on-demand`) |
+
+## Confusion: Pending vs Queued
+
+| State | Layer |
+| --- | --- |
+| Workload **Queued** | Kueue — not admitted yet (quota / FIFO) |
+| Pod **Pending**, Workload **Admitted** | Scheduler or node capacity |
+| Many Pending pods, no Workloads | Kueue not managing those Jobs (missing queue label / controller) |
+
+## Burst script / Job clone failures
+
+| Cause | What to check |
+| --- | --- |
+| `jq: command not found` | Install `jq` — see [Prerequisites](/deploy-and-operate/prerequisites/) |
+| `Missing sample-job in project-*` | `kubectl apply -f examples/workloads/sample-jobs.yaml` |
+| Re-applied Job YAML with UID / selector | Do **not** `kubectl get job -o yaml` + sed; use `burst-jobs.sh` (`jq` strips controller fields) |
+| `kubectl create job --from=…` errors | Client/API mismatch — prefer the lab helper script |
+
+## Fair share looks “unfair”
+
+Lab ClusterQueue uses **BestEffortFIFO** on one shared quota. If `project-a` submits first while quota is free, it can take all **10** Spot CPU slots; `project-b` / `c` stay Queued until those Jobs finish. That is expected — not three isolated 10-CPU budgets. Weighted fairness needs priorities / cohorts beyond this walkthrough.
+
+## KueueViz UI / WebSocket
+
+| Symptom | What to check |
+| --- | --- |
+| Blank page or WebSocket failed | Both port-forwards: frontend **8080**, backend **8081** |
+| CORS error in browser console | Open **http://localhost:8080** (or ensure Helm `KUEUEVIZ_ALLOWED_ORIGINS` includes `http://127.0.0.1:8080` if you use that origin) |
+| ConfigMap shows `wss://backend.kueueviz.local` | Helm ingress/host values wrong — fix `kueue-application.yaml` and sync; do **not** kubectl-patch (Argo `selfHeal` reverts) |
+| Patches keep disappearing | Edit Application Helm values only — see [Kueue via GitOps](/deploy-and-operate/kueue-gitops/) |
+| Empty queues / workloads | Open KueueViz **after** [Queues](/deploy-and-operate/queues/) so tenants and sample Jobs exist |
+
+```bash
+kubectl -n kueue-system get configmap kueue-kueueviz-frontend-env \
+  -o jsonpath='{.data.env\.js}{"\n"}'
+# expect something like: window.env = { WEBSOCKET_URL: "ws://localhost:8081" }
+```
+
+## Argo CD sync errors
+
+| Cause | What to check |
+| --- | --- |
+| Capability RBAC | EKS access entry + `AmazonEKSClusterAdminPolicy` for the capability role |
+| OCI Helm registry | Cluster egress to `registry.k8s.io` |
+| CRDs not installed | Sync Kueue controller Application first |
+
+## Argo CD Application stuck / InvalidSpecError
+
+| Cause | What to check |
+| --- | --- |
+| `cluster "https://kubernetes.default.svc" is disabled` | Register local cluster by **EKS ARN** — see [Kueue via GitOps](/deploy-and-operate/kueue-gitops/) |
+| Sync permission denied | `associate-access-policy` with `AmazonEKSClusterAdminPolicy` for `ArgoCDCapabilityRole` |
+| **Synced** + **Progressing**, readiness `404` | Normal until leader election / Auto Mode node — wait for **Healthy** |
+| App not Synced | `kubectl describe application kueue -n argocd` |
+
+## Kueue controller not ready
+
+```bash
+kubectl logs -n kueue-system deploy/kueue-controller-manager --tail=80
+kubectl get validatingwebhookconfiguration | grep kueue
+kubectl get pods -n kueue-system -o wide
+```
+
+Pods should schedule on the **system** NodePool (`CriticalAddonsOnly` toleration).
+
+## eksctl capability stuck
+
+```bash
+eksctl get capability --cluster "$CLUSTER_NAME" --region "$AWS_REGION"
+aws eks describe-capability --cluster-name "$CLUSTER_NAME" --capability-name lab-argocd
+```
+
+Verify Identity Center `idcRegion` matches your organization home Region (`IDC_REGION`).
+
+## Teardown leftovers
+
+| Symptom | What to check |
+| --- | --- |
+| `eksctl delete cluster` hangs | Confirm Jobs/NodePools deleted; check CloudFormation stack in the Region |
+| IAM role delete fails | Detach access policy / inline policies first — see [Teardown](/deploy-and-operate/teardown/) |
+| Cluster still listed | Wait for CloudFormation; then `aws eks describe-cluster` should return `ResourceNotFoundException` |

@@ -1,0 +1,217 @@
+---
+title: Verify batch admission
+description: Submit sample and burst Jobs and confirm Kueue admits work up to quota.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import DocImage from "@/components/DocImage.astro";
+
+Work from **`demo/`**:
+
+```bash
+cd "$LAB_DIR"
+```
+
+<Aside type="note">
+  Bursts target tenant **namespaces** (`project-a` / `b` / `c`) and their LocalQueues — not Argo CD Projects or Applications.
+</Aside>
+
+## Prerequisites for this page
+
+- Queues, NodePool `batch`, and `examples/workloads/sample-jobs.yaml` from [Queues and flavors](/deploy-and-operate/queues/)
+- Optional but useful: [KueueViz](/deploy-and-operate/kueueviz/) open at http://localhost:8080 while you burst
+- A `sample-job` still present in each namespace you will burst (Complete is fine — the script clones the Job spec)
+- **`jq`** on your PATH (used to build clean Job manifests)
+
+```bash
+jq --version
+kubectl get job sample-job -n project-a
+kubectl get job sample-job -n project-b
+kubectl get job sample-job -n project-c
+```
+
+If a sample Job is missing, re-apply:
+
+```bash
+kubectl apply -f examples/workloads/sample-jobs.yaml
+```
+
+## Confirm the three sample Workloads finished
+
+Optional — if you just finished the previous page, samples may already be **Complete** / **FINISHED=True**:
+
+```bash
+kubectl get workloads -A
+kubectl get localqueue -A
+```
+
+Finished samples release Spot quota. If samples are still **Running** when you burst, they count toward the 10 CPU cap (you may see fewer than 10 new admits until they finish).
+
+## Burst test (quota cap)
+
+Create a helper that clones each namespace’s **own** `sample-job` into many burst Jobs. It uses `jq` (not raw `sed` on live Job YAML) so controller UIDs and selectors are not copied — those break apply.
+
+Burst Jobs sleep **180s** by default so quota stays reserved long enough to inspect **Queued** Workloads (`SLEEP_SECONDS` overrides).
+
+```bash
+mkdir -p examples/workloads
+
+cat > examples/workloads/burst-jobs.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+NAMESPACE="${1:-project-a}"
+COUNT="${2:-20}"
+QUEUE="${3:-$NAMESPACE}"
+SLEEP_SECONDS="${SLEEP_SECONDS:-180}"
+
+if ! kubectl get job sample-job -n "$NAMESPACE" >/dev/null 2>&1; then
+  echo "Missing sample-job in ${NAMESPACE}. Apply examples/workloads/sample-jobs.yaml first." >&2
+  exit 1
+fi
+
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+for i in $(seq 1 "$COUNT"); do
+  kubectl get job sample-job -n "$NAMESPACE" -o json |
+    jq --arg name "burst-${i}" --arg queue "$QUEUE" --argjson sleep "$SLEEP_SECONDS" '
+      {
+        apiVersion: .apiVersion,
+        kind: .kind,
+        metadata: {
+          name: $name,
+          namespace: .metadata.namespace,
+          labels: {
+            "kueue.x-k8s.io/queue-name": $queue
+          }
+        },
+        spec: {
+          parallelism: .spec.parallelism,
+          completions: .spec.completions,
+          backoffLimit: (.spec.backoffLimit // 6),
+          template: {
+            spec: (
+              .spec.template.spec
+              | .restartPolicy = "Never"
+              | .containers[0].command = ["/bin/sh", "-c", ("sleep " + ($sleep | tostring))]
+              | del(.nodeName)
+            )
+          }
+        }
+      }
+    ' > "${tmpdir}/burst-${i}.json"
+done
+
+kubectl apply -f "$tmpdir"
+echo "Submitted ${COUNT} jobs to namespace ${NAMESPACE} (queue ${QUEUE}, sleep ${SLEEP_SECONDS}s)"
+echo "Watch: kubectl get workloads -A; kubectl get localqueue -A"
+EOF
+
+chmod +x examples/workloads/burst-jobs.sh
+./examples/workloads/burst-jobs.sh project-a 30
+```
+
+Inspect immediately:
+
+```bash
+kubectl get localqueue -A
+kubectl get clusterqueue shared-batch
+kubectl get workloads -n project-a
+kubectl get pods -n project-a
+kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool
+```
+
+If [KueueViz](/deploy-and-operate/kueueviz/) is open, watch Admitted vs waiting Workloads update while these commands show the quota numbers.
+
+### What you should see
+
+With `SPOT_CPU_QUOTA=10` and **1 CPU** per Job, a 30-Job burst into `project-a` (and no other active admits) yields roughly:
+
+```text
+NAMESPACE   NAME        CLUSTERQUEUE   PENDING WORKLOADS   ADMITTED WORKLOADS
+project-a   project-a   shared-batch   20                  10
+project-b   project-b   shared-batch   0                   0
+project-c   project-c   shared-batch   0                   0
+
+NAME           COHORT   PENDING WORKLOADS
+shared-batch            20
+```
+
+ClusterQueue Spot usage should show **10 CPU** reserved (names/ages vary):
+
+```text
+Flavors Usage:
+  Name: spot
+  ...
+  cpu Total: 10
+  memory Total: 2000Mi
+```
+
+KueueViz **Local Queues** during that burst (10 admitted / 20 pending on `project-a`):
+
+<DocImage src="verify-kueueviz-localqueues-burst.png" alt="KueueViz Local Queues: project-a has 10 admitted and 20 pending Workloads on shared-batch" />
+
+Same story at the ClusterQueue — **`shared-batch`** with 10 admitted and 20 pending:
+
+<DocImage src="verify-kueueviz-clusterqueues-burst.png" alt="KueueViz Cluster Queues: shared-batch shows 10 admitted, 20 pending, Spot CPU in use" />
+
+| Observation | Meaning |
+| --- | --- |
+| **~10** Workloads **Admitted** (`ADMITTED=True`, `RESERVED IN=shared-batch`) | Spot CPU quota cap working |
+| **~20** Workloads with empty `RESERVED IN` / not Admitted | **Queued** — waiting for Kueue quota, not a broken scheduler |
+| Some Admitted pods **Running**, others **Pending** | Quota reserved; Auto Mode / Spot node capacity still catching up (`batch` NodePool) |
+| Extra Spot nodes appearing (`NODEPOOL=batch`) | Auto Mode scaling for admitted work |
+
+<Aside type="tip">
+  **Queued** (Workload) ≠ **Pending** (Pod). Queued means Kueue has not admitted the Job yet. Pending with Admitted means the Job may run but no node has accepted the pod yet — see [Troubleshooting](/reference/troubleshooting/).
+</Aside>
+
+## Fair share across tenants (shared ClusterQueue)
+
+Delete the previous burst first so quota is free, then submit from each tenant’s own `sample-job`:
+
+```bash
+for ns in project-a project-b project-c; do
+  jobs=$(kubectl get jobs -n "$ns" -o name | grep burst || true)
+  [ -n "$jobs" ] && kubectl delete -n "$ns" $jobs
+done
+
+./examples/workloads/burst-jobs.sh project-a 10
+./examples/workloads/burst-jobs.sh project-b 10
+./examples/workloads/burst-jobs.sh project-c 10
+
+kubectl get localqueue -A
+kubectl get workloads -A | head -40
+```
+
+All LocalQueues map to **`shared-batch`** with **BestEffortFIFO**. If you submit `project-a` first while quota is free, expect something like:
+
+```text
+NAMESPACE   NAME        CLUSTERQUEUE   PENDING WORKLOADS   ADMITTED WORKLOADS
+project-a   project-a   shared-batch   0                   10
+project-b   project-b   shared-batch   10                  0
+project-c   project-c   shared-batch   10                  0
+```
+
+KueueViz view of that FIFO outcome:
+
+<DocImage src="verify-kueueviz-localqueues-fairshare.png" alt="KueueViz Local Queues after fair-share bursts: project-a admitted 10; project-b and project-c each have 10 pending" />
+
+That is correct for this lab: tenants share one ClusterQueue, not three isolated 10-CPU budgets. When `project-a` Jobs finish, Kueue admits Workloads from `project-b` / `project-c` next. True weighted multi-tenant fairness needs extra Kueue policy (priorities / cohorts) beyond this walkthrough.
+
+## Clean up workloads (keep cluster)
+
+```bash
+kubectl delete jobs -n project-a --all
+kubectl delete jobs -n project-b --all
+kubectl delete jobs -n project-c --all
+```
+
+Re-apply samples later if you need them again:
+
+```bash
+kubectl apply -f examples/workloads/sample-jobs.yaml
+```
+
+Next: [Teardown](/deploy-and-operate/teardown/) when finished with the lab.

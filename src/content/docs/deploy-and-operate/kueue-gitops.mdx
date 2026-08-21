@@ -1,0 +1,228 @@
+---
+title: Kueue via GitOps
+description: Deploy the Kueue controller with an Argo CD Application — same pattern as KEDA.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import DocImage from "@/components/DocImage.astro";
+
+Kueue is not an EKS add-on. Deploy it like KEDA: an Argo CD `Application` pointing at the upstream Helm chart.
+
+Work from **`demo/`**:
+
+```bash
+cd "$LAB_DIR"
+```
+
+## Set variables
+
+```bash
+export KUEUE_CHART_VERSION=0.19.1
+export KUEUE_APP_NAME=kueue
+export CLUSTER_ARN=$(aws eks describe-cluster \
+  --name "$CLUSTER_NAME" \
+  --region "$AWS_REGION" \
+  --query 'cluster.arn' \
+  --output text)
+export ARGOCD_ROLE_ARN="arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/${ARGOCD_ROLE_NAME:-ArgoCDCapabilityRole}"
+
+echo "CLUSTER_ARN=$CLUSTER_ARN"
+```
+
+## Register this cluster for Argo CD
+
+Managed Argo CD does **not** use `https://kubernetes.default.svc`. Register the local EKS cluster by ARN, then grant the capability role cluster permissions to sync workloads:
+
+```bash
+mkdir -p examples/argocd
+
+cat > examples/argocd/in-cluster-secret.yaml <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: in-cluster
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+stringData:
+  name: in-cluster
+  server: ${CLUSTER_ARN}
+  project: default
+EOF
+
+kubectl apply -f examples/argocd/in-cluster-secret.yaml
+
+aws eks associate-access-policy \
+  --cluster-name "$CLUSTER_NAME" \
+  --principal-arn "$ARGOCD_ROLE_ARN" \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --access-scope type=cluster
+```
+
+See [Register target clusters](https://docs.aws.amazon.com/eks/latest/userguide/argocd-register-clusters.html).
+
+## Deploy with Argo CD
+
+Create the Application manifest under `demo/`, then apply it. Destination `server` must be the **EKS cluster ARN**:
+
+```bash
+cat > examples/argocd/kueue-application.yaml <<EOF
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${KUEUE_APP_NAME}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: oci://registry.k8s.io/kueue/charts/kueue
+    chart: kueue
+    targetRevision: ${KUEUE_CHART_VERSION}
+    helm:
+      releaseName: kueue
+      values: |
+        enableKueueViz: true
+        controllerManager:
+          nodeSelector:
+            karpenter.sh/nodepool: system
+          tolerations:
+            - key: CriticalAddonsOnly
+              operator: Exists
+        kueueViz:
+          backend:
+            nodeSelector:
+              karpenter.sh/nodepool: system
+            tolerations:
+              - key: CriticalAddonsOnly
+                operator: Exists
+            env:
+              - name: KUEUEVIZ_ALLOWED_ORIGINS
+                value: "http://localhost:8080,http://127.0.0.1:8080"
+            ingress:
+              # disabled — lab uses port-forward; host still drives frontend WebSocket URL
+              enabled: false
+              host: localhost:8081
+              tlsEnabled: false
+              tlsSecretName: ""
+          frontend:
+            nodeSelector:
+              karpenter.sh/nodepool: system
+            tolerations:
+              - key: CriticalAddonsOnly
+                operator: Exists
+            ingress:
+              enabled: false
+  destination:
+    server: ${CLUSTER_ARN}
+    namespace: kueue-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+EOF
+
+kubectl apply -f examples/argocd/kueue-application.yaml
+kubectl get application -n argocd "$KUEUE_APP_NAME"
+```
+
+**`KUEUE_CHART_VERSION=0.19.1`** is the chart version used in this walkthrough **as of this writing** — newer Kueue chart releases may exist; bump the export if you intentionally track a later release.
+
+`enableKueueViz: true` installs the optional **KueueViz** dashboard with the controller. Configure WebSocket/CORS **in these Helm values** (not with later `kubectl patch` / `set env` — Argo CD `selfHeal` owns the rendered ConfigMap and Deployment):
+
+- Ingress **off** (`enabled: false`) — lab uses port-forward on [KueueViz dashboard](/deploy-and-operate/kueueviz/)
+- `kueueViz.backend.ingress.host: localhost:8081` and `tlsEnabled: false` — the chart still uses that host to write `ws://localhost:8081` into the frontend ConfigMap
+- `KUEUEVIZ_ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080` — CORS for the browser origin (both forms)
+
+`nodeSelector` / `tolerations` sit under `controllerManager` and `kueueViz.*` so pods land on the Auto Mode **system** node pool:
+
+```yaml
+enableKueueViz: true
+controllerManager:
+  nodeSelector:
+    karpenter.sh/nodepool: system
+  tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+kueueViz:
+  backend:
+    nodeSelector:
+      karpenter.sh/nodepool: system
+    tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+    env:
+      - name: KUEUEVIZ_ALLOWED_ORIGINS
+        value: "http://localhost:8080,http://127.0.0.1:8080"
+    ingress:
+      # disabled — lab uses port-forward; host still drives frontend WebSocket URL
+      enabled: false
+      host: localhost:8081
+      tlsEnabled: false
+      tlsSecretName: ""
+  frontend:
+    nodeSelector:
+      karpenter.sh/nodepool: system
+    tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+    ingress:
+      enabled: false
+```
+
+## What you see while it starts
+
+Sync is usually quick (**Synced**), but health often stays **Progressing** for a few minutes. That is normal: Auto Mode may still be adding a node, and the controller readiness probe returns **404** until the manager wins leader election.
+
+Right after apply — **Synced** + **Progressing**:
+
+<DocImage src="argocd-kueue-progressing.png" alt="Argo CD kueue Application Synced and Progressing" />
+
+While Progressing, pod events commonly show readiness failures:
+
+```text
+Warning  Unhealthy  ...  Readiness probe failed: HTTP probe failed with statuscode: 404
+```
+
+Check yourself:
+
+```bash
+kubectl get events -n kueue-system --field-selector reason=Unhealthy --sort-by='.lastTimestamp' | tail
+kubectl logs -n kueue-system deploy/kueue-controller-manager --tail=50 | grep -E 'became leader|transitioned to leader'
+```
+
+Example log lines once leadership is acquired (readyz then succeeds):
+
+```text
+..."msg":"... became leader"... "reason":"LeaderElection"
+..."msg":"RoleTracker: transitioned to leader"
+```
+
+When the controller is up, the same card shows **Healthy** + **Synced**:
+
+<DocImage src="argocd-kueue-healthy.png" alt="Argo CD kueue Application Healthy and Synced" />
+
+Do not tear down on the temporary readiness 404s — wait for **Healthy** (or use `kubectl wait` below).
+
+## Verify controller
+
+```bash
+kubectl wait deploy/kueue-controller-manager -n kueue-system \
+  --for=condition=available --timeout=10m
+
+kubectl wait deploy/kueue-kueueviz-backend deploy/kueue-kueueviz-frontend \
+  -n kueue-system --for=condition=available --timeout=10m
+
+kubectl get pods -n kueue-system -o wide
+kubectl get application -n argocd "$KUEUE_APP_NAME"
+```
+
+Expect the Application **Healthy** / **Synced**, the manager pod **1/1 Running**, and KueueViz backend/frontend pods **Running** (you open the UI after queues exist).
+
+<Aside type="note">
+  After the controller is healthy, apply queue policy on the [next page](/deploy-and-operate/queues/). Open [KueueViz](/deploy-and-operate/kueueviz/) once tenants and sample Jobs exist so the dashboard has something to show.
+</Aside>
+
+Next: [Queues and flavors](/deploy-and-operate/queues/).

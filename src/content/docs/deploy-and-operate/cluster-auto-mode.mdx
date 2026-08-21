@@ -1,0 +1,77 @@
+---
+title: Cluster (Auto Mode)
+description: Create an EKS Auto Mode cluster with eksctl for the Kueue lab.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+Skip this page if you already have a suitable cluster. Jump to [Argo CD capability](/deploy-and-operate/argocd-capability/) or [Kueue via GitOps](/deploy-and-operate/kueue-gitops/).
+
+## Set variables
+
+Reuse the exports from [Prerequisites](/deploy-and-operate/prerequisites/). Work under **`demo/`**:
+
+```bash
+export AWS_PROFILE=sandbox
+export CLUSTER_NAME=kueue-lab
+export AWS_REGION=ap-southeast-2
+export AWS_DEFAULT_REGION="$AWS_REGION"
+export IDC_REGION="$AWS_REGION"
+export K8S_VERSION=1.36
+cd "$LAB_DIR"
+```
+
+## Create the cluster config
+
+```bash
+mkdir -p config
+
+cat > config/cluster.yaml <<EOF
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: ${CLUSTER_NAME}
+  region: ${AWS_REGION}
+  version: "${K8S_VERSION}"
+
+autoModeConfig:
+  enabled: true
+EOF
+
+cat config/cluster.yaml
+```
+
+Auto Mode enables default **system** and **general-purpose** node pools. You do not manage managed node groups for this lab. Nodes appear when workloads need capacity — not necessarily right after create.
+
+## Create the cluster
+
+```bash
+eksctl create cluster -f config/cluster.yaml
+```
+
+Expect roughly **10–20 minutes** for a new VPC and control plane. eksctl also installs the **metrics-server** addon and writes a kubeconfig entry when the cluster is ready.
+
+## Configure kubectl
+
+```bash
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
+kubectl get nodes
+```
+
+An empty node list (`No resources found`) is normal for a fresh Auto Mode cluster. Nodes scale in when Jobs (or other pods) are scheduled.
+
+<Aside type="note">
+  Kueue requires Kubernetes **1.29+**. This lab pins **1.36** by default (`K8S_VERSION`).
+</Aside>
+
+## Verify Auto Mode
+
+```bash
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.{version:version,status:status,compute:computeConfig}'
+```
+
+Expect `status` **ACTIVE**, `version` **1.36**, and `compute.enabled` **true** with node pools such as `general-purpose` and `system`.
+
+Next: [Argo CD capability](/deploy-and-operate/argocd-capability/) (optional) or [Kueue via GitOps](/deploy-and-operate/kueue-gitops/).

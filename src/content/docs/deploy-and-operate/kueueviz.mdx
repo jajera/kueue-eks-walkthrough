@@ -1,0 +1,74 @@
+---
+title: KueueViz dashboard
+description: Open the optional KueueViz UI to watch Workloads and queues visually.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+import DocImage from "@/components/DocImage.astro";
+
+KueueViz was enabled with the controller on [Kueue via GitOps](/deploy-and-operate/kueue-gitops/) (`enableKueueViz: true`). WebSocket URL and CORS are set in that Application’s Helm values — do **not** patch the ConfigMap or Deployment by hand (Argo CD would overwrite them).
+
+It is **not** Argo CD — it visualizes Kueue **Workloads**, LocalQueues, and ClusterQueues. Open it **after** [Queues and flavors](/deploy-and-operate/queues/) so tenant namespaces and sample Jobs exist.
+
+Work from **`demo/`**:
+
+```bash
+cd "$LAB_DIR"
+```
+
+## Confirm pods
+
+```bash
+kubectl get deploy -n kueue-system | grep kueueviz
+kubectl get pods -n kueue-system | grep kueueviz
+```
+
+Expect backend and frontend Deployments **Available** (names and ages vary):
+
+```text
+kueue-kueueviz-backend     1/1     1            1           170m
+kueue-kueueviz-frontend    1/1     1            1           170m
+kueue-kueueviz-backend-6c5969b79c-ddftm     1/1     Running   0          170m
+kueue-kueueviz-frontend-8c5b7d485-2mh5z     1/1     Running   0          170m
+```
+
+Optional — confirm the GitOps-managed WebSocket target is already `ws://localhost:8081`:
+
+```bash
+kubectl -n kueue-system get configmap kueue-kueueviz-frontend-env \
+  -o jsonpath='{.data.env\.js}{"\n"}'
+```
+
+```text
+window.env = {
+  VITE_WEBSOCKET_URL: "ws://localhost:8081",
+  REACT_APP_WEBSOCKET_URL: "ws://localhost:8081"
+};
+```
+
+## Port-forward (lab access)
+
+Ingress is off. Only port-forward (no kubectl patch / set env):
+
+```bash
+pkill -f 'port-forward.*kueueviz' 2>/dev/null || true
+
+kubectl port-forward -n kueue-system svc/kueue-kueueviz-frontend 8080:8080 >/tmp/kueueviz-frontend.log 2>&1 &
+kubectl port-forward -n kueue-system svc/kueue-kueueviz-backend 8081:8080 >/tmp/kueueviz-backend.log 2>&1 &
+```
+
+Open **http://localhost:8080**.
+
+<Aside type="tip">
+  Keep both port-forwards running while you use [Verify batch admission](/deploy-and-operate/verify-batch/). Stop them with `pkill -f 'port-forward.*kueueviz'` when finished.
+</Aside>
+
+## What you should see
+
+Workloads for `project-a` / `b` / `c` (when Jobs exist), LocalQueues, and ClusterQueue `shared-batch`. With Jobs cleared, the dashboard still shows queues/flavors with empty workload lists. During a burst, Admitted vs waiting Workloads update in the UI while `kubectl get localqueue -A` still shows the quota numbers.
+
+<DocImage src="kueueviz-dashboard.png" alt="KueueViz dashboard showing LocalQueues project-a/b/c and ClusterQueue shared-batch" />
+
+Official docs: [Enable KueueViz](https://kueue.sigs.k8s.io/docs/tasks/manage/enable_kueueviz/).
+
+Next: [Verify batch admission](/deploy-and-operate/verify-batch/).
