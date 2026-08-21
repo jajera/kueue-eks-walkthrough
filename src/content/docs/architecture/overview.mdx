@@ -1,0 +1,47 @@
+---
+title: Architecture overview
+description: Lab topology for EKS Auto Mode, managed Argo CD, Kueue, and multi-project batch queues.
+---
+
+import ThemeDiagram from "@/components/ThemeDiagram.astro";
+
+## Lab topology
+
+<ThemeDiagram
+  dark="architecture-diagram.svg"
+  light="architecture-diagram-light.svg"
+  alt="Lab topology: Argo CD syncs into kueue-lab with Kueue controller, project LocalQueues, shared ClusterQueue, and Auto Mode node pools"
+/>
+
+## What you create in the lab
+
+Manifests are created under **`demo/`** at the repository root during [Deploy and Operate](/deploy-and-operate/prerequisites/) (`demo/` is gitignored). Do not create `config/` or `examples/` at the repo root.
+
+| Created on | Files under `demo/` |
+| --- | --- |
+| [Cluster (Auto Mode)](/deploy-and-operate/cluster-auto-mode/) | `config/cluster.yaml` |
+| [Argo CD capability](/deploy-and-operate/argocd-capability/) | `config/argocd-capability.yaml`, `config/iam/argocd-trust-policy.json` |
+| [Kueue via GitOps](/deploy-and-operate/kueue-gitops/) | `examples/argocd/in-cluster-secret.yaml`, `examples/argocd/kueue-application.yaml` (includes KueueViz) |
+| [Queues and flavors](/deploy-and-operate/queues/) | `examples/kueue/queues.yaml`, `examples/kueue/batch-nodepool.yaml`, `examples/workloads/sample-jobs.yaml` |
+| [KueueViz dashboard](/deploy-and-operate/kueueviz/) | Port-forward access (enabled via Helm `enableKueueViz`) |
+| [Verify batch](/deploy-and-operate/verify-batch/) | `examples/workloads/burst-jobs.sh` |
+
+See [Manifest reference](/reference/manifest-reference/) for field-level detail.
+
+## Quota model for this lab
+
+`project-a` / `project-b` / `project-c` are **Kubernetes namespaces + LocalQueues** (simulated tenants). They are unrelated to Argo CD `AppProject` or Applications — Argo CD only deploys the Kueue controller.
+
+| Object | Setting |
+| --- | --- |
+| `ClusterQueue` `shared-batch` | Up to **10 CPU** on Spot flavor (adjust via `SPOT_CPU_QUOTA`) |
+| `LocalQueue` `project-a` | Maps namespace `project-a` to shared queue |
+| `LocalQueue` `project-b` | Maps namespace `project-b` to shared queue |
+| `LocalQueue` `project-c` | Maps namespace `project-c` to shared queue |
+| Sample Job | `1` CPU request, label `kueue.x-k8s.io/queue-name` |
+
+When you submit more Jobs than quota allows, Kueue keeps excess work in **Queued** Workloads instead of creating a large Pending pod backlog.
+
+## Spot note
+
+`ResourceFlavor` `spot` / `on-demand` use Auto Mode labels `karpenter.sh/capacity-type: spot` and `on-demand`. If Spot capacity is tight, admitted jobs may still wait for nodes — Kueue quota and EC2 capacity are separate limits.

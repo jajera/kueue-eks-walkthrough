@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.log
+.env
+.env.*
+
+# Lab artifacts — only demo/ at repo root (never commit)
+/demo/

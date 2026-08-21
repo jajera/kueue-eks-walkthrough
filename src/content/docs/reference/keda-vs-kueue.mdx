@@ -1,0 +1,53 @@
+---
+title: KEDA vs Kueue
+description: Complementary tools on EKS — event scaling versus batch admission.
+---
+
+import ThemeDiagram from "@/components/ThemeDiagram.astro";
+import Tooltip from "@/components/Tooltip.astro";
+
+<Tooltip term="keda" label="KEDA" /> and <Tooltip term="kueue" label="Kueue" /> often land on the same EKS cluster. They answer different questions and usually sit next to each other — they do not replace each other.
+
+<ThemeDiagram
+  dark="keda-vs-kueue-diagram.svg"
+  light="keda-vs-kueue-diagram-light.svg"
+  alt="Side-by-side: KEDA scales Deployments from Kafka, SQS, or Prometheus; Kueue admits batch Jobs into Admitted or Queued by quota"
+/>
+
+| | KEDA | Kueue |
+| --- | --- | --- |
+| Question | How many replicas from external demand? | Which batch jobs may run given quota? |
+| Unit | Deployment, StatefulSet, ScaledJob | Job, Workload |
+| Trigger | SQS, Kafka, Prometheus, cron | Internal quota and priority |
+| Outcome | Replica count goes up or down | Workload is **Admitted** or stays **Queued** |
+| EKS add-on | Available | No (install via GitOps) |
+| Web apps | Common use case | Not for always-on serving |
+
+## Use together
+
+Event depth can grow workers freely; those workers still submit **Jobs** that must pass Kueue quota before pods appear:
+
+<ThemeDiagram
+  dark="keda-kueue-together-diagram.svg"
+  light="keda-kueue-together-diagram-light.svg"
+  alt="Pipeline: events to KEDA to worker Deployment to Jobs to Kueue admission to Auto Mode nodes"
+/>
+
+```text
+KEDA scales workers from queue depth
+   → workers submit training Jobs
+   → Kueue admits Jobs by GPU or CPU quota
+```
+
+## Use Kueue alone when
+
+- Batch Jobs compete for a fixed or capped pool
+- Multiple projects need fair share
+- You cap concurrent Jobs on Spot
+
+## Use KEDA alone when
+
+- Workloads scale with events and cluster capacity is not contested
+- No batch admission policy is required
+
+Both deploy through **Argo CD** on this stack — neither appears in the EKS add-ons list for Auto Mode. This lab installs **Kueue** only; add KEDA the same GitOps way when you need event-driven replica scaling.

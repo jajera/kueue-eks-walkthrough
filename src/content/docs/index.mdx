@@ -1,0 +1,32 @@
+---
+title: Kueue on EKS Walkthrough
+description: Batch job queuing on EKS with Kueue queues fair share and Argo CD deploy steps.
+template: splash
+hero:
+  tagline: Deploy Kueue on Amazon EKS Auto Mode with eksctl and GitOps — cap concurrent batch jobs and share quota across projects.
+  actions:
+    - text: Get Started
+      link: /concepts/what-is-kueue/
+      icon: right-arrow
+      variant: primary
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+import Tooltip from "@/components/Tooltip.astro";
+
+## What you'll build
+
+<CardGrid>
+  <Card title="Understand job admission" icon="open-book" link="/concepts/what-is-kueue/">
+    When you need <Tooltip term="kueue" label="Kueue" />, <Tooltip term="admission" label="job admission" /> and fair share across projects, and why web apps stay outside the queue.
+  </Card>
+  <Card title="Map the cluster layout" icon="puzzle" link="/architecture/overview/">
+    <Tooltip term="eks" label="EKS" /> <Tooltip term="auto-mode" label="Auto Mode" /> <Tooltip term="node-pool" label="node pools" />, managed <Tooltip term="argocd-capability" label="Argo CD capability" />, <Tooltip term="kueue" label="Kueue" /> controller, and <Tooltip term="spot" label="Spot" /> flavors for batch workloads.
+  </Card>
+  <Card title="Deploy the lab step by step" icon="rocket" link="/deploy-and-operate/prerequisites/">
+    <Tooltip term="eksctl" label="eksctl" /> cluster, optional <Tooltip term="argocd-capability" label="Argo CD capability" />, <Tooltip term="kueue" label="Kueue" /> <Tooltip term="gitops" label="GitOps" />, queues, sample Jobs, verify batch scheduling, and teardown.
+  </Card>
+  <Card title="Compare KEDA vs Kueue" icon="document" link="/reference/keda-vs-kueue/">
+    When each tool fits, manifest map for this lab, and troubleshooting <Tooltip term="pending" label="Pending" /> vs <Tooltip term="queued" label="Queued" /> workloads.
+  </Card>
+</CardGrid>

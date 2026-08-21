@@ -1,0 +1,124 @@
+---
+title: Teardown
+description: Delete lab Jobs and destroy the eksctl Auto Mode cluster.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+:::caution
+These steps delete billable resources. Run only when you finish the lab.
+:::
+
+Reuse the same exports from [Prerequisites](/deploy-and-operate/prerequisites/) (`CLUSTER_NAME`, `AWS_REGION`, `AWS_PROFILE`, `LAB_DIR`, and Argo CD vars if you created the capability).
+
+```bash
+export AWS_PROFILE=sandbox
+export AWS_PAGER=""
+export AWS_REGION=ap-southeast-2
+export AWS_DEFAULT_REGION="$AWS_REGION"
+export CLUSTER_NAME=kueue-lab
+export LAB_DIR="$(pwd)/demo"   # from repo root; or export LAB_DIR="$(pwd)" if already in demo/
+export ARGOCD_CAPABILITY_NAME=lab-argocd
+export ARGOCD_ROLE_NAME=ArgoCDCapabilityRole
+```
+
+Work from **`demo/`**:
+
+```bash
+cd "$LAB_DIR"
+```
+
+Stop KueueViz port-forwards if they are still running:
+
+```bash
+pkill -f 'port-forward.*kueueviz' 2>/dev/null || true
+```
+
+## Remove batch work and Kueue
+
+Delete Jobs first so Auto Mode can drain Spot nodes, then remove queues, the NodePool, and the Argo CD Application:
+
+```bash
+kubectl delete jobs -n project-a --all --ignore-not-found
+kubectl delete jobs -n project-b --all --ignore-not-found
+kubectl delete jobs -n project-c --all --ignore-not-found
+
+kubectl delete -f examples/kueue/queues.yaml --ignore-not-found
+kubectl delete -f examples/kueue/batch-nodepool.yaml --ignore-not-found
+kubectl delete -f examples/argocd/kueue-application.yaml --ignore-not-found
+kubectl delete -f examples/argocd/in-cluster-secret.yaml --ignore-not-found
+
+# Helm/Application usually removes kueue-system; force if needed
+kubectl delete namespace kueue-system --ignore-not-found --wait=false
+```
+
+If a manifest file is missing, delete by name instead:
+
+```bash
+kubectl delete application kueue -n argocd --ignore-not-found
+kubectl delete secret in-cluster -n argocd --ignore-not-found
+kubectl delete clusterqueue shared-batch --ignore-not-found
+kubectl delete resourceflavor spot on-demand --ignore-not-found
+kubectl delete nodepool batch --ignore-not-found
+kubectl delete namespace project-a project-b project-c --ignore-not-found
+```
+
+<Aside type="tip">
+  Wait until burst Jobs finish or are deleted before destroying the cluster — leftover Admitted pods keep Spot nodes (and cost) longer.
+</Aside>
+
+## Delete Argo CD capability
+
+If you created the lab capability:
+
+```bash
+export ARGOCD_ROLE_ARN="arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/${ARGOCD_ROLE_NAME}"
+
+aws eks disassociate-access-policy \
+  --cluster-name "$CLUSTER_NAME" \
+  --principal-arn "$ARGOCD_ROLE_ARN" \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --region "$AWS_REGION" 2>/dev/null || true
+
+eksctl delete capability -f config/argocd-capability.yaml
+
+# wait until gone (eksctl has no --wait on delete capability)
+while eksctl get capability --cluster "$CLUSTER_NAME" --region "$AWS_REGION" 2>/dev/null | grep -q lab-argocd; do
+  echo "waiting for capability delete..."
+  sleep 15
+done
+
+# Role may already be gone if CloudFormation removed it with the capability stack
+aws iam delete-role --role-name "$ARGOCD_ROLE_NAME" 2>/dev/null || true
+```
+
+If `config/argocd-capability.yaml` is gone, delete by name:
+
+```bash
+eksctl delete capability \
+  --cluster "$CLUSTER_NAME" \
+  --name "$ARGOCD_CAPABILITY_NAME" \
+  --region "$AWS_REGION"
+```
+
+This lab attaches **no extra IAM policies** to `ArgoCDCapabilityRole`. `delete-role` returning `NoSuchEntity` after a successful capability delete is fine.
+
+## Destroy cluster
+
+```bash
+eksctl delete cluster -f config/cluster.yaml --wait
+```
+
+If the file is missing:
+
+```bash
+eksctl delete cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" --wait
+```
+
+Confirm the cluster is gone:
+
+```bash
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" 2>&1 | head
+```
+
+Expect `ResourceNotFoundException`.

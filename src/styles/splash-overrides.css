@@ -1,0 +1,13 @@
+/* Theme overrides */
+
+.sidebar-pane ul.top-level > li > details > summary {
+  padding-inline-start: var(--sl-sidebar-item-padding-inline) !important;
+}
+
+.sidebar-pane ul.top-level > li > details > summary .caret {
+  display: none !important;
+}
+
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+  padding: 0.625rem 1rem;
+}

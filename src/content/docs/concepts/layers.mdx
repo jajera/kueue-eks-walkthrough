@@ -1,0 +1,47 @@
+---
+title: Layers on EKS
+description: How Auto Mode, managed Argo CD, Kueue, and KEDA divide responsibility on the same cluster.
+---
+
+import Tooltip from "@/components/Tooltip.astro";
+import ThemeDiagram from "@/components/ThemeDiagram.astro";
+
+Four tools appear in this walkthrough. They stack — they do not replace each other.
+
+<ThemeDiagram
+  dark="layers-diagram.svg"
+  light="layers-diagram-light.svg"
+  alt="Layers stack: GitHub to Argo CD to Kueue, KEDA, and Jobs on EKS, then Auto Mode nodes"
+/>
+
+## At a glance
+
+| Layer | Question it answers | Runs where |
+| --- | --- | --- |
+| **Auto Mode** | Which nodes exist? | AWS-managed compute for the data plane |
+| **Argo CD capability** | Does the cluster match Git? | AWS control plane (not on your worker nodes) |
+| **Kueue** | Which batch jobs may start now? | Pods in `kueue-system` on the cluster |
+| **KEDA** | How many replicas from queue depth? | Pods in `keda` namespace on the cluster |
+
+## Scheduler versus provisioner
+
+This mirrors the [EKS control plane parameters](https://jajera.github.io/eks-control-plane-config/layers/) idea:
+
+- **Kueue** decides whether a **batch job** may create pods (<Tooltip term="admission" label="admission" />).
+- **Auto Mode** decides whether **nodes** should exist for schedulable pods (provision).
+
+A job can be **admitted** by Kueue while pods stay **Pending** until Auto Mode adds a node — especially on <Tooltip term="spot" label="Spot" />.
+
+## Same GitOps pattern as KEDA
+
+Neither <Tooltip term="kueue" label="Kueue" /> nor <Tooltip term="keda" label="KEDA" /> is an EKS console add-on. Both deploy as <Tooltip term="argocd" label="Argo CD" /> <Tooltip term="application" label="Application" /> resources pointing at <Tooltip term="helm" label="Helm" /> charts or manifest paths in Git.
+
+## Batch versus serving
+
+| Workload | Tool |
+| --- | --- |
+| Job, CronJob, training batch | Kueue (this walkthrough) |
+| Deployment scaled by SQS or CPU | KEDA or HPA |
+| GitOps delivery of all of the above | Argo CD |
+
+Illustrated comparison (and how they chain): [KEDA vs Kueue](/reference/keda-vs-kueue/).

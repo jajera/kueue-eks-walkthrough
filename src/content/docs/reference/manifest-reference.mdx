@@ -1,0 +1,109 @@
+---
+title: Manifest reference
+description: Files you create under demo/ during the lab and what each one does.
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+Lab manifests are generated under **`demo/`** at the repository root during [Deploy and Operate](/deploy-and-operate/prerequisites/). That directory is gitignored — do not create `config/` or `examples/` at the repo root.
+
+Relative paths in deploy pages (`config/…`, `examples/…`) always mean **`$LAB_DIR/…`**.
+
+## Layout
+
+<FileTree>
+
+- demo/
+  - config/
+    - cluster.yaml
+    - argocd-capability.yaml
+    - iam/
+      - argocd-trust-policy.json
+  - examples/
+    - argocd/
+      - in-cluster-secret.yaml
+      - kueue-application.yaml
+    - kueue/
+      - queues.yaml
+      - batch-nodepool.yaml
+    - workloads/
+      - sample-jobs.yaml
+      - burst-jobs.sh
+
+</FileTree>
+
+## demo/config/
+
+| File | Created on | Purpose |
+| --- | --- | --- |
+| `cluster.yaml` | [Cluster (Auto Mode)](/deploy-and-operate/cluster-auto-mode/) | eksctl Auto Mode cluster (`kueue-lab`, Kubernetes **1.36**) |
+| `argocd-capability.yaml` | [Argo CD capability](/deploy-and-operate/argocd-capability/) | Managed Argo CD capability (`lab-argocd`) |
+| `iam/argocd-trust-policy.json` | [Argo CD capability](/deploy-and-operate/argocd-capability/) | Trust policy for `ArgoCDCapabilityRole` |
+
+## demo/examples/argocd/
+
+| File | Created on | Purpose |
+| --- | --- | --- |
+| `in-cluster-secret.yaml` | [Kueue via GitOps](/deploy-and-operate/kueue-gitops/) | Register this EKS cluster by **ARN** as an Argo CD destination (not `kubernetes.default.svc`) |
+| `kueue-application.yaml` | [Kueue via GitOps](/deploy-and-operate/kueue-gitops/) | Argo CD Application for the Kueue Helm chart + KueueViz |
+
+Notable Helm values in `kueue-application.yaml` (lab defaults):
+
+| Value | Why |
+| --- | --- |
+| `enableKueueViz: true` | Installs KueueViz with the controller |
+| `controllerManager` / `kueueViz.*` `nodeSelector` + `CriticalAddonsOnly` | Land on Auto Mode **system** pool |
+| `kueueViz.backend.ingress.enabled: false` | Lab uses port-forward, not Ingress |
+| `kueueViz.backend.ingress.host: localhost:8081` | Chart still uses this host to write `ws://localhost:8081` into the frontend ConfigMap |
+| `KUEUEVIZ_ALLOWED_ORIGINS` | CORS for `http://localhost:8080` and `http://127.0.0.1:8080` |
+| `syncPolicy.automated.selfHeal: true` | Do **not** kubectl-patch ConfigMaps/Deployments — edit Helm values instead |
+
+Chart pin used in this walkthrough: **`KUEUE_CHART_VERSION=0.19.1`**.
+
+## demo/examples/kueue/
+
+| File | Created on | Purpose |
+| --- | --- | --- |
+| `queues.yaml` | [Queues and flavors](/deploy-and-operate/queues/) | Namespaces `project-a/b/c`, ResourceFlavors `spot` / `on-demand`, ClusterQueue `shared-batch`, LocalQueues — **not** Argo CD AppProjects |
+| `batch-nodepool.yaml` | [Queues and flavors](/deploy-and-operate/queues/) | Auto Mode NodePool `batch` allowing Spot (+ On-Demand) for Spot-flavored Jobs |
+
+Default quota exports when you generate `queues.yaml`:
+
+| Export | Default | Used for |
+| --- | --- | --- |
+| `SPOT_CPU_QUOTA` | `10` | Spot flavor CPU in `shared-batch` |
+| `SPOT_MEMORY_QUOTA` | `20Gi` | Spot flavor memory |
+| `ON_DEMAND_CPU_QUOTA` | `4` | On-Demand flavor CPU |
+| `ON_DEMAND_MEMORY_QUOTA` | `8Gi` | On-Demand flavor memory |
+
+## demo/examples/workloads/
+
+| File | Created on | Purpose |
+| --- | --- | --- |
+| `sample-jobs.yaml` | [Queues and flavors](/deploy-and-operate/queues/) | One `sample-job` per project namespace (busybox, **1 CPU**, queue label) |
+| `burst-jobs.sh` | [Verify batch](/deploy-and-operate/verify-batch/) | Clones each tenant’s `sample-job` with **`jq`** into `burst-N` Jobs (default sleep **180s**) |
+
+## Key labels
+
+| Key | Value example | On |
+| --- | --- | --- |
+| `kueue.x-k8s.io/queue-name` | `project-a` | Job `metadata.labels` — must match a LocalQueue name in that namespace |
+
+## Objects the lab creates (cluster)
+
+| Kind | Name(s) | Source |
+| --- | --- | --- |
+| Namespace | `project-a`, `project-b`, `project-c`, `kueue-system`, `argocd` | queues / Helm / capability |
+| ResourceFlavor | `spot`, `on-demand` | `queues.yaml` |
+| ClusterQueue | `shared-batch` | `queues.yaml` |
+| LocalQueue | `project-a` / `b` / `c` (in matching ns) | `queues.yaml` |
+| NodePool | `batch` | `batch-nodepool.yaml` |
+| Application | `kueue` (ns `argocd`) | `kueue-application.yaml` |
+| Secret | `in-cluster` (ns `argocd`) | `in-cluster-secret.yaml` |
+
+## Upstream docs
+
+- [Kueue installation](https://kueue.sigs.k8s.io/docs/getting-started/installation/)
+- [Enable KueueViz](https://kueue.sigs.k8s.io/docs/tasks/manage/enable_kueueviz/)
+- [EKS Auto Mode with eksctl](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-eksctl.html)
+- [Argo CD EKS capability](https://docs.aws.amazon.com/eks/latest/userguide/argocd.html)
