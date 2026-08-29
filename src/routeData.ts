@@ -1,6 +1,6 @@
 import { defineRouteMiddleware } from "@astrojs/starlight/route-data";
 
-const OG_IMAGE_PATH = "/kueue-eks-walkthrough/og-image.png";
+const OG_IMAGE_PATH = "/og-image.png";
 const OG_IMAGE_ALT =
   "Kueue on EKS walkthrough — batch job admission, ClusterQueue quota, and GitOps on Auto Mode";
 
