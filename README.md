@@ -11,11 +11,11 @@ npm install
 npm run dev
 ```
 
-Open the URL Astro prints (default `http://localhost:4321/kueue-eks-walkthrough/`).
+Open the URL Astro prints (default `http://localhost:4321/`).
 
 ## Production site
 
-`https://jajera.github.io/kueue-eks-walkthrough/` after GitHub Pages deploy.
+`https://kueue-eks-walkthrough.johna.kiwi/` after GitHub Pages deploy.
 
 ## Repository layout
 
