@@ -1,14 +1,38 @@
-export const glossary: Record<string, string> = {
-  kueue:
-    "Kubernetes-native job admission controller — decides when batch Jobs may create pods based on quota, priority, and resource flavors.",
-  keda:
-    "Kubernetes Event-driven Autoscaling — scales Deployment or StatefulSet replicas from external metrics such as SQS queue depth. Complements Kueue; does not replace batch admission.",
+export type GlossaryEntry =
+  | string
+  | {
+      definition: string;
+      url?: string;
+      urlLabel?: string;
+    };
+
+export const glossary: Record<string, GlossaryEntry> = {
+  kueue: {
+    definition:
+      "Kubernetes-native job admission controller — decides when batch Jobs may create pods based on quota, priority, and resource flavors.",
+    url: "https://kueue.sigs.k8s.io/",
+    urlLabel: "Kueue docs",
+  },
+  keda: {
+    definition:
+      "Kubernetes Event-driven Autoscaling — scales Deployment or StatefulSet replicas from external metrics such as SQS queue depth. Complements Kueue; does not replace batch admission.",
+    url: "https://keda.sh/",
+    urlLabel: "KEDA docs",
+  },
   "auto-mode":
     "Amazon EKS Auto Mode — AWS-managed compute that provisions and scales node pools for schedulable pods without managed node groups.",
-  eks:
-    "Amazon Elastic Kubernetes Service — managed Kubernetes control plane; this lab uses cluster name `kueue-lab`.",
-  argocd:
-    "Argo CD — GitOps controller that syncs cluster state from Git. This walkthrough uses the optional EKS managed Argo CD capability.",
+  eks: {
+    definition:
+      "Amazon Elastic Kubernetes Service — managed Kubernetes control plane; this lab uses cluster name `kueue-lab`.",
+    url: "https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html",
+    urlLabel: "EKS docs",
+  },
+  argocd: {
+    definition:
+      "Argo CD — GitOps controller that syncs cluster state from Git. This walkthrough uses the optional EKS managed Argo CD capability.",
+    url: "https://argo-cd.readthedocs.io/",
+    urlLabel: "Argo CD docs",
+  },
   "identity-center":
     "AWS IAM Identity Center (formerly AWS SSO) — organization-wide workforce identity. CLI access uses `aws sso login`. For the EKS managed Argo CD capability it is the only supported UI auth (local Argo CD users are not supported).",
   idc:
@@ -50,3 +74,15 @@ export const glossary: Record<string, string> = {
   pending:
     "Pod phase — scheduler or kubelet has not placed or started the pod yet; distinct from Kueue Queued.",
 };
+
+export function resolveGlossaryEntry(entry: GlossaryEntry | undefined) {
+  if (!entry) return { definition: undefined, url: undefined, urlLabel: undefined };
+  if (typeof entry === "string") {
+    return { definition: entry, url: undefined, urlLabel: undefined };
+  }
+  return {
+    definition: entry.definition,
+    url: entry.url,
+    urlLabel: entry.urlLabel ?? entry.url,
+  };
+}

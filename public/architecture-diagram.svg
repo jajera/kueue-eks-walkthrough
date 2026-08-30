@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1040" height="526" viewBox="0 0 1040 526" fill="none" color-scheme="dark">
   <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-      <stop stop-color="#2f2440"/>
-      <stop offset="1" stop-color="#17111f"/>
+      <stop stop-color="#0b171c"/>
+      <stop offset="1" stop-color="#071014"/>
     </linearGradient></defs>
   <rect width="1040" height="526" rx="12" fill="url(#bg)"/>
-  <rect x="1" y="1" width="1038" height="524" rx="11" stroke="#6d5f95" stroke-width="1" fill="none" opacity="0.55"/>
+  <rect x="1" y="1" width="1038" height="524" rx="11" stroke="#1e3a44" stroke-width="1" fill="none" opacity="0.55"/>
   
-  <rect x="16" y="12" width="108" height="140" rx="8" fill="#3d3254" stroke="#6d5f95" stroke-width="1"/>
-  <text x="70" y="87" text-anchor="middle" fill="#e8e0f4" font-family="sans-serif" font-size="13" font-weight="600">GitOps</text>
-  <rect x="16" y="160" width="108" height="174" rx="8" fill="#3d3254" stroke="#6d5f95" stroke-width="1"/>
-  <text x="70" y="252" text-anchor="middle" fill="#e8e0f4" font-family="sans-serif" font-size="13" font-weight="600">Cluster</text>
-  <rect x="16" y="334" width="108" height="140" rx="8" fill="#3d3254" stroke="#6d5f95" stroke-width="1"/>
-  <text x="70" y="409" text-anchor="middle" fill="#e8e0f4" font-family="sans-serif" font-size="13" font-weight="600">Compute</text>
+  <rect x="16" y="12" width="108" height="140" rx="8" fill="#14303a" stroke="#23404a" stroke-width="1"/>
+  <text x="70" y="87" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">GitOps</text>
+  <rect x="16" y="160" width="108" height="174" rx="8" fill="#14303a" stroke="#23404a" stroke-width="1"/>
+  <text x="70" y="252" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">Cluster</text>
+  <rect x="16" y="334" width="108" height="140" rx="8" fill="#14303a" stroke="#23404a" stroke-width="1"/>
+  <text x="70" y="409" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">Compute</text>
   <g transform="translate(556.2222222222222 30) scale(0.0749665327978581)">
   <path id="argo-a" fill="#fff" d="M336.76 437.61c0 28.31-18.83 43.36-49.29 43.36-30.45 0-47.2-17.84-47.2-43.36 0 0 16.75 23.65 47.2 23.65 30.46 0 49.3-23.65 49.3-23.65Z"/>
   <path fill="#E2F5FC" d="M290.5 547.98c148.47 0 268.84-120.45 268.84-269.04 0-148.58-120.37-269.03-268.84-269.03-148.47 0-268.84 120.45-268.84 269.03 0 148.59 120.37 269.04 268.84 269.04Z"/>
@@ -36,16 +36,16 @@
   <path fill="#fff" d="M378 378.21a60.94 60.94 0 0 0 60.93-60.96A60.94 60.94 0 0 0 378 256.29a60.94 60.94 0 0 0-60.92 60.96A60.94 60.94 0 0 0 378 378.21Z"/>
   <path fill="#090B0B" d="M379.13 325.27a18.72 18.72 0 1 0-.02-37.44 18.72 18.72 0 0 0 .01 37.44Z"/>
 </g>
-  <text x="578" y="102" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">Argo CD</text><text x="578" y="118" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">EKS Capability · AWS-managed GitOps</text>
-  <line x1="578" y1="120" x2="578" y2="148" stroke="#6d5f95" stroke-width="2"/>
-  <polygon points="573,148 578,156 583,148" fill="#6d5f95"/>
-  <text x="622" y="138" fill="#9b92b0" font-family="sans-serif" font-size="11">sync</text>
-  <rect x="132" y="160" width="892" height="166" rx="12" fill="#231a30" stroke="#6d5f95" stroke-width="1"/>
-  <text x="148" y="178" fill="#e8e0f4" font-family="sans-serif" font-size="12" font-weight="600">EKS Auto Mode — kueue-lab</text>
+  <text x="578" y="102" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">Argo CD</text><text x="578" y="118" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">EKS Capability · AWS-managed GitOps</text>
+  <line x1="578" y1="120" x2="578" y2="148" stroke="#3d6b78" stroke-width="2"/>
+  <polygon points="573,148 578,156 583,148" fill="#3d6b78"/>
+  <text x="622" y="138" fill="#b7cdd4" font-family="sans-serif" font-size="11">sync</text>
+  <rect x="132" y="160" width="892" height="166" rx="12" fill="#0f1f26" stroke="#23404a" stroke-width="1"/>
+  <text x="148" y="178" fill="#eef8fa" font-family="sans-serif" font-size="12" font-weight="600">EKS Auto Mode — kueue-lab</text>
   <g transform="translate(221.5 178) scale(0.112)"><defs><style>.kueue-dark-cls-1{fill:none;}.kueue-dark-cls-2{fill:#fff;}</style></defs><path class="kueue-dark-cls-2" d="m433.62356,128.35976c-2.08173-8.69836-7.95428-16.00427-16.00146-19.9071l-154.7251-73.875c-8.12177-3.87585-17.55994-3.87585-25.68182,0l-132.20721,63.16162-22.49567,10.74841c-4.02441,1.94995-7.50519,4.75098-10.24005,8.15186-.3363.41846-.62549.87244-.93896,1.30847-.32318.44958-.66986.88159-.96771,1.34863-.44861.70374-.84033,1.44348-1.22943,2.18445-.12042.22913-.26569.44336-.38025.67578-.96912,1.96851-1.72681,4.05518-2.24738,6.22913l-38.164,166.0376c-.94098,4.19617-.94397,8.54822-.00885,12.74561.27551,1.27942.63544,2.53943,1.07745,3.77161.74683,2.10132,1.7356,4.10852,2.94666,5.98096.52203.80762,1.08173,1.58728,1.67828,2.33911l107.08264,133.13501c.05634.07007.1228.13086.18073.19946.41925.49744.86115.9707,1.30896,1.44165.68567.7301,1.43066,1.39844,2.18561,2.05396.17078.14832.32037.32031.49469.46436.1214.10083.2594.18005.38251.27881.8338.66797,1.68854,1.31079,2.59149,1.88525.63086.39722,1.27667.76855,1.93329,1.11816,2.0672,1.09839,4.25476,1.95911,6.52264,2.55908,2.4527.67236,4.98267,1.02124,7.52576,1.03772h1.66534l170.0506-.03955c1.03387-.00452,2.06677-.06519,3.09381-.18201,1.47345-.16675,2.93231-.44385,4.36407-.82935,1.02618-.27014,2.0376-.59399,3.02991-.96973.01007-.00391.01996-.00781.03003-.01172.67834-.24707,1.34259-.52734,1.99988-.823.08704-.03992.17664-.07397.263-.11536,1.11713-.53503,2.20081-1.13721,3.24493-1.80359,2.6944-1.69434,5.09344-3.8175,7.10242-6.28613l2.3407-2.91028.92175-1.1488,64.55017-80.29761,39.23047-48.80261c1.98895-2.49426,3.55176-5.30042,4.62494-8.30469.33771-.93079.58264-1.8905.82654-2.84961.0791-.3125.1994-.6134.26837-.92834v.00317c.00018-.00049.00031-.00098.00043-.00146.93787-4.19458.93628-8.54468-.00482-12.7384l-38.22534-166.03552Zm-272.38379,181.42822l-34.12726,34.12732c-2.07458,2.07446-4.62421,3.00256-7.1261,3.00256-5.23389,0-10.25525-4.06494-10.25525-10.20215v-166.70178c0-6.10437,4.99902-10.20178,10.24542-10.20178,2.36584,0,4.78302.83411,6.81299,2.69312l34.4502,31.55103,6.12323,5.60815,6.12421,5.60864,40.31451,36.92188c4.27618,3.91626,4.42303,10.60791.32288,14.70825l-40.63739,40.63733-6.12421,6.12415-6.12323,6.12329Zm63.75519.00085l-34.12646,34.12646c-2.07452,2.07446-4.62415,3.00256-7.12604,3.00256-5.23389,0-10.25525-4.06494-10.25525-10.20215v-21.85474l49.29761-49.29761c.80493-.80493,1.54291-1.66797,2.21014-2.57861,2.90118-3.95996,4.46246-8.82471,4.35376-13.77356-.10132-4.61548-1.6532-9.09265-4.35376-12.78113-.8609-1.17578-1.83612-2.27307-2.92145-3.26709l-48.5863-44.49756v-18.65149c0-6.10437,4.99902-10.20178,10.24542-10.20178,2.36578,0,4.78296.83411,6.81293,2.69312l34.4494,31.55042,6.12341,5.60803,6.12402,5.60864,40.31531,36.92261c4.27625,3.91626,4.4231,10.60791.32294,14.70825l-40.63824,40.63818-6.12402,6.12402-6.12341,6.12341Zm63.75513,0l-34.12646,34.12646c-2.07446,2.07446-4.62408,3.00256-7.12604,3.00256-5.23383,0-10.25519-4.06494-10.25519-10.20215v-21.85388l49.29846-49.29846c.80463-.80469,1.54224-1.66724,2.20923-2.57751,2.90173-3.96008,4.46338-8.82532,4.35474-13.77466-.10132-4.61609-1.65356-9.09363-4.35474-12.78235-.86072-1.17529-1.83563-2.27222-2.92053-3.26587l-48.58716-44.49829v-18.65076c0-6.10437,4.99896-10.20178,10.24542-10.20178,2.36578,0,4.78296.83411,6.81293,2.69312l34.44934,31.55029,6.12366,5.6084,6.12378,5.6084,40.31537,36.92261c4.27625,3.91626,4.4231,10.60791.32288,14.70825l-40.63824,40.63818-6.12378,6.12378-6.12366,6.12366Zm116.64081-52.88562l-87.01208,87.01208c-2.07452,2.07446-4.62415,3.00256-7.12604,3.00256-5.23389,0-10.25525-4.06494-10.25525-10.20215v-21.85376l49.29846-49.29858c4.30518-4.30518,6.69763-10.26526,6.56396-16.35217-.13361-6.08679-2.78534-11.93616-7.27521-16.04822l-48.58722-44.49829v-18.65076c0-6.10437,4.99902-10.20178,10.24542-10.20178,2.36578,0,4.78302.83411,6.81293,2.69312l87.01221,79.6897c4.27618,3.91626,4.42303,10.60791.32281,14.70825Z"/></g>
-  <text x="249.5" y="250" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">kueue-system</text><text x="249.5" y="266" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">controller</text>
-<line x1="285.5" y1="206" x2="424.5" y2="206" stroke="#6d5f95" stroke-width="2"/>
-  <polygon points="424.5,201 434.5,206 424.5,211" fill="#6d5f95"/>
+  <text x="249.5" y="250" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">kueue-system</text><text x="249.5" y="266" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">controller</text>
+<line x1="285.5" y1="206" x2="424.5" y2="206" stroke="#3d6b78" stroke-width="2"/>
+  <polygon points="424.5,201 434.5,206 424.5,211" fill="#3d6b78"/>
 <g transform="translate(442.5 178.77120035592355) scale(2.883229110145673)">
   <defs
      id="ns-defs13820" />
@@ -95,9 +95,9 @@
        style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.40000001;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:0.80000001, 0.4;stroke-dashoffset:3.44000006;stroke-opacity:1" />
   </g>
 </g>
-  <text x="468.5" y="250" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">project-a</text><text x="468.5" y="266" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">LocalQueue + Jobs</text>
-<line x1="502.5" y1="204" x2="643.5" y2="204" stroke="#6d5f95" stroke-width="2"/>
-  <polygon points="643.5,199 653.5,204 643.5,209" fill="#6d5f95"/>
+  <text x="468.5" y="250" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">project-a</text><text x="468.5" y="266" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">LocalQueue + Jobs</text>
+<line x1="502.5" y1="204" x2="643.5" y2="204" stroke="#3d6b78" stroke-width="2"/>
+  <polygon points="643.5,199 653.5,204 643.5,209" fill="#3d6b78"/>
 <g transform="translate(661.5 178.77120035592355) scale(2.883229110145673)">
   <defs
      id="ns-defs13820" />
@@ -147,9 +147,9 @@
        style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.40000001;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:0.80000001, 0.4;stroke-dashoffset:3.44000006;stroke-opacity:1" />
   </g>
 </g>
-  <text x="687.5" y="250" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">project-b</text><text x="687.5" y="266" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">LocalQueue + Jobs</text>
-<line x1="721.5" y1="204" x2="862.5" y2="204" stroke="#6d5f95" stroke-width="2"/>
-  <polygon points="862.5,199 872.5,204 862.5,209" fill="#6d5f95"/>
+  <text x="687.5" y="250" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">project-b</text><text x="687.5" y="266" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">LocalQueue + Jobs</text>
+<line x1="721.5" y1="204" x2="862.5" y2="204" stroke="#3d6b78" stroke-width="2"/>
+  <polygon points="862.5,199 872.5,204 862.5,209" fill="#3d6b78"/>
 <g transform="translate(880.5 178.77120035592355) scale(2.883229110145673)">
   <defs
      id="ns-defs13820" />
@@ -199,11 +199,11 @@
        style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.40000001;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:0.80000001, 0.4;stroke-dashoffset:3.44000006;stroke-opacity:1" />
   </g>
 </g>
-  <text x="906.5" y="250" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">project-c</text><text x="906.5" y="266" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">LocalQueue + Jobs</text>
-  <rect x="188" y="278" width="780" height="34" rx="8" fill="#3d3254" stroke="#6d5f95" stroke-width="1"/>
-  <text x="578" y="299" text-anchor="middle" fill="#e8e0f4" font-family="sans-serif" font-size="12">ClusterQueue shared-batch · Spot + On-Demand quota</text>
-  <line x1="578" y1="330" x2="578" y2="356" stroke="#6d5f95" stroke-width="2"/>
-  <polygon points="573,356 578,364 583,356" fill="#6d5f95"/>
+  <text x="906.5" y="250" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">project-c</text><text x="906.5" y="266" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">LocalQueue + Jobs</text>
+  <rect x="188" y="278" width="780" height="34" rx="8" fill="#14303a" stroke="#23404a" stroke-width="1"/>
+  <text x="578" y="299" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="12">ClusterQueue shared-batch · Spot + On-Demand quota</text>
+  <line x1="578" y1="330" x2="578" y2="356" stroke="#3d6b78" stroke-width="2"/>
+  <polygon points="573,356 578,364 583,356" fill="#3d6b78"/>
   <g transform="translate(550 372.8305234602253) scale(3.1050159647722633)">
   <defs
      id="node-defs13820" />
@@ -252,6 +252,6 @@
        />
   </g>
 </g>
-  <text x="578" y="444" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">Node pools</text><text x="578" y="460" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">system · general-purpose · batch (Spot)</text>
+  <text x="578" y="444" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">Node pools</text><text x="578" y="460" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">system · general-purpose · batch (Spot)</text>
   
 </svg>

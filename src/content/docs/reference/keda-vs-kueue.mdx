@@ -5,6 +5,7 @@ description: Complementary tools on EKS — event scaling versus batch admission
 
 import ThemeDiagram from "@/components/ThemeDiagram.astro";
 import Tooltip from "@/components/Tooltip.astro";
+import DiagramIconCredit from "@/components/DiagramIconCredit.astro";
 
 <Tooltip term="keda" label="KEDA" /> and <Tooltip term="kueue" label="Kueue" /> often land on the same EKS cluster. They answer different questions and usually sit next to each other — they do not replace each other.
 
@@ -51,3 +52,5 @@ KEDA scales workers from queue depth
 - No batch admission policy is required
 
 Both deploy through **Argo CD** on this stack — neither appears in the EKS add-ons list for Auto Mode. This lab installs **Kueue** only; add KEDA the same GitOps way when you need event-driven replica scaling.
+
+<DiagramIconCredit />
