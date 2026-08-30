@@ -1,6 +1,5 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
-import starlightThemeVintage from "starlight-theme-vintage";
 import { starlightBasePath } from "starlight-base-path";
 
 export default defineConfig({
@@ -8,16 +7,20 @@ export default defineConfig({
   base: "/",
   integrations: [
     starlight({
-      components: {
-        Head: "./src/components/Head.astro",
-      },
       title: "Kueue on EKS",
       favicon: "/favicon.svg",
       description:
         "Batch job queuing on EKS with Kueue queues fair share and Argo CD deploy steps.",
-      plugins: [starlightThemeVintage(), starlightBasePath()],
+      plugins: [starlightBasePath()],
       routeMiddleware: "./src/routeData.ts",
-      customCss: ["./src/styles/splash-overrides.css"],
+      customCss: [
+        "./src/styles/patina-tokens.css",
+        "./src/styles/splash-overrides.css",
+      ],
+      components: {
+        ThemeSelect: "./src/components/ThemeSelect.astro",
+        Head: "./src/components/Head.astro",
+      },
       social: [
         {
           icon: "github",

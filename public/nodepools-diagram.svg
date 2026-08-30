@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1040" height="364" viewBox="0 0 1040 364" fill="none" color-scheme="dark">
   <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-      <stop stop-color="#2f2440"/>
-      <stop offset="1" stop-color="#17111f"/>
+      <stop stop-color="#0b171c"/>
+      <stop offset="1" stop-color="#071014"/>
     </linearGradient></defs>
   <rect width="1040" height="364" rx="12" fill="url(#bg)"/>
-  <rect x="1" y="1" width="1038" height="362" rx="11" stroke="#6d5f95" stroke-width="1" fill="none" opacity="0.55"/>
+  <rect x="1" y="1" width="1038" height="362" rx="11" stroke="#1e3a44" stroke-width="1" fill="none" opacity="0.55"/>
   
-  <text x="520" y="34" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="16" font-weight="600">Auto Mode NodePools — only batch can launch Spot for Kueue Jobs</text>
+  <text x="520" y="34" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="16" font-weight="600">Auto Mode NodePools — only batch can launch Spot for Kueue Jobs</text>
   
-  <rect x="24" y="56" width="317.3333333333333" height="220" rx="12" fill="#231a30" stroke="#6d5f95" stroke-width="1"/>
-  <text x="40" y="80" fill="#e8e0f4" font-family="sans-serif" font-size="12" font-weight="600">Default Auto Mode</text>
+  <rect x="24" y="56" width="317.3333333333333" height="220" rx="12" fill="#0f1f26" stroke="#23404a" stroke-width="1"/>
+  <text x="40" y="80" fill="#eef8fa" font-family="sans-serif" font-size="12" font-weight="600">Default Auto Mode</text>
   <g transform="translate(154.66666666666666 96.83052346022535) scale(3.1050159647722633)">
   <defs
      id="node-defs13820" />
@@ -59,11 +59,11 @@
        />
   </g>
 </g>
-  <text x="182.66666666666666" y="174" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">system</text><text x="182.66666666666666" y="190" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">Platform / CriticalAddonsOnly</text>
-  <text x="182.66666666666666" y="248" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="12">on-demand</text>
+  <text x="182.66666666666666" y="174" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">system</text><text x="182.66666666666666" y="190" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">Platform / CriticalAddonsOnly</text>
+  <text x="182.66666666666666" y="248" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="12">on-demand</text>
 
-  <rect x="361.3333333333333" y="56" width="317.3333333333333" height="220" rx="12" fill="#231a30" stroke="#6d5f95" stroke-width="1"/>
-  <text x="377.3333333333333" y="80" fill="#e8e0f4" font-family="sans-serif" font-size="12" font-weight="600">Default Auto Mode</text>
+  <rect x="361.3333333333333" y="56" width="317.3333333333333" height="220" rx="12" fill="#0f1f26" stroke="#23404a" stroke-width="1"/>
+  <text x="377.3333333333333" y="80" fill="#eef8fa" font-family="sans-serif" font-size="12" font-weight="600">Default Auto Mode</text>
   <g transform="translate(492 96.83052346022535) scale(3.1050159647722633)">
   <defs
      id="node-defs13820" />
@@ -112,11 +112,11 @@
        />
   </g>
 </g>
-  <text x="520" y="174" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">general-purpose</text><text x="520" y="190" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">No Spot requirement</text>
-  <text x="520" y="248" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="12">on-demand only</text>
+  <text x="520" y="174" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">general-purpose</text><text x="520" y="190" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">No Spot requirement</text>
+  <text x="520" y="248" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="12">on-demand only</text>
 
-  <rect x="698.6666666666666" y="56" width="317.3333333333333" height="220" rx="12" fill="#231a30" stroke="#f4f1f8" stroke-width="2"/>
-  <text x="714.6666666666666" y="80" fill="#e8e0f4" font-family="sans-serif" font-size="12" font-weight="600">Lab NodePool (this page)</text>
+  <rect x="698.6666666666666" y="56" width="317.3333333333333" height="220" rx="12" fill="#0f1f26" stroke="#eef8fa" stroke-width="2"/>
+  <text x="714.6666666666666" y="80" fill="#eef8fa" font-family="sans-serif" font-size="12" font-weight="600">Lab NodePool (this page)</text>
   <g transform="translate(829.3333333333333 96.83052346022535) scale(3.1050159647722633)">
   <defs
      id="node-defs13820" />
@@ -165,9 +165,9 @@
        />
   </g>
 </g>
-  <text x="857.3333333333333" y="174" text-anchor="middle" fill="#f4f1f8" font-family="sans-serif" font-size="13" font-weight="600">batch</text><text x="857.3333333333333" y="190" text-anchor="middle" fill="#9b92b0" font-family="sans-serif" font-size="11">Satisfies Spot ResourceFlavor</text>
-  <rect x="714.6666666666666" y="232" width="285.3333333333333" height="28" rx="8" fill="#3d3254" stroke="#f4f1f8" stroke-width="1"/>
-  <text x="857.3333333333333" y="251" text-anchor="middle" fill="#e8e0f4" font-family="sans-serif" font-size="12" font-weight="600">spot + on-demand</text>
+  <text x="857.3333333333333" y="174" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="13" font-weight="600">batch</text><text x="857.3333333333333" y="190" text-anchor="middle" fill="#b7cdd4" font-family="sans-serif" font-size="11">Satisfies Spot ResourceFlavor</text>
+  <rect x="714.6666666666666" y="232" width="285.3333333333333" height="28" rx="8" fill="#14303a" stroke="#eef8fa" stroke-width="1"/>
+  <text x="857.3333333333333" y="251" text-anchor="middle" fill="#eef8fa" font-family="sans-serif" font-size="12" font-weight="600">spot + on-demand</text>
   <g transform="translate(720.6666666666666 284.41526173011266) scale(1.5525079823861316)">
   <defs
      id="job-defs13820" />
@@ -263,6 +263,6 @@
     </g>
   </g>
 </g>
-  <text x="756.6666666666666" y="304" fill="#9b92b0" font-family="sans-serif" font-size="12">sample-job pods (Spot flavor) schedule on batch</text>
+  <text x="756.6666666666666" y="304" fill="#b7cdd4" font-family="sans-serif" font-size="12">sample-job pods (Spot flavor) schedule on batch</text>
   
 </svg>

@@ -4,6 +4,7 @@ description: Lab topology for EKS Auto Mode, managed Argo CD, Kueue, and multi-p
 ---
 
 import ThemeDiagram from "@/components/ThemeDiagram.astro";
+import DiagramIconCredit from "@/components/DiagramIconCredit.astro";
 
 ## Lab topology
 
@@ -45,3 +46,5 @@ When you submit more Jobs than quota allows, Kueue keeps excess work in **Queued
 ## Spot note
 
 `ResourceFlavor` `spot` / `on-demand` use Auto Mode labels `karpenter.sh/capacity-type: spot` and `on-demand`. If Spot capacity is tight, admitted jobs may still wait for nodes — Kueue quota and EC2 capacity are separate limits.
+
+<DiagramIconCredit />

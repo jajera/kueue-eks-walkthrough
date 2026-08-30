@@ -1,31 +1,27 @@
-# kueue-eks-walkthrough
+# Kueue on EKS Walkthrough
 
-Batch job queuing on EKS with Kueue queues fair share and Argo CD deploy steps.
+Batch job queuing on EKS with Kueue queues, fair share, and Argo CD deploy steps.
 
-CLI lab and walkthrough site for deploying Kueue on Amazon EKS Auto Mode with eksctl and GitOps.
+**Site:** https://kueue-eks-walkthrough.johna.kiwi/
 
-## Local preview
+## Quick start
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the URL Astro prints (default `http://localhost:4321/`).
+Open the local preview URL (usually http://localhost:4321/).
 
-## Production site
+## Structure
 
-`https://kueue-eks-walkthrough.johna.kiwi/` after GitHub Pages deploy.
+```text
+src/content/docs/     Walkthrough (Astro Starlight)
+public/               Favicon, CNAME, OG image, diagrams
+demo/                 Lab working directory (gitignored)
+AGENTS.md             Notes for coding agents
+```
 
-## Repository layout
+## License
 
-| Path | Contents |
-| --- | --- |
-| `src/content/docs/` | Walkthrough pages (Astro Starlight) |
-| `scripts/` | Diagram generators |
-| `public/` | Static assets (diagrams, favicon) |
-| `demo/` | Lab working directory (gitignored) — create manifests only here |
-
-## Lab quick start
-
-See the site **Deploy and Operate** section or start at `src/content/docs/deploy-and-operate/prerequisites.mdx`.
+See [LICENSE](LICENSE).

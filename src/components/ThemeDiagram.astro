@@ -27,7 +27,6 @@ const dialogId = `theme-diagram-${dark.replace(/[^a-zA-Z0-9]+/g, "-")}`;
       alt={alt}
       class="theme-diagram__dark"
       width="980"
-      height="auto"
       loading="lazy"
       decoding="async"
     />
@@ -36,7 +35,6 @@ const dialogId = `theme-diagram-${dark.replace(/[^a-zA-Z0-9]+/g, "-")}`;
       alt=""
       class="theme-diagram__light"
       width="980"
-      height="auto"
       loading="lazy"
       decoding="async"
       aria-hidden="true"
@@ -90,7 +88,7 @@ const dialogId = `theme-diagram-${dark.replace(/[^a-zA-Z0-9]+/g, "-")}`;
   }
 
   .theme-diagram__trigger {
-    display: block;
+    display: grid;
     width: 100%;
     padding: 0;
     margin: 0;
@@ -100,6 +98,10 @@ const dialogId = `theme-diagram-${dark.replace(/[^a-zA-Z0-9]+/g, "-")}`;
     border-radius: 0.5rem;
     line-height: 0;
     text-align: left;
+  }
+
+  .theme-diagram__trigger img {
+    grid-area: 1 / 1;
   }
 
   .theme-diagram__trigger:focus-visible {
