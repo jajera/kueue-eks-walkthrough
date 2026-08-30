@@ -8,6 +8,9 @@ export default defineConfig({
   base: "/",
   integrations: [
     starlight({
+      components: {
+        Head: "./src/components/Head.astro",
+      },
       title: "Kueue on EKS",
       favicon: "/favicon.svg",
       description:
