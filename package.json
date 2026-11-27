@@ -20,7 +20,7 @@
     "starlight-base-path": "^0.2.1"
   },
   "devDependencies": {
-    "markdownlint-cli2": "^0.24.1",
+    "markdownlint-cli2": "^0.24.2",
     "prettier": "^3.10.1"
   },
   "overrides": {
